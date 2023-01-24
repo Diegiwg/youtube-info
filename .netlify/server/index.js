@@ -1,8 +1,7 @@
-import { D as DEV } from "./chunks/prod-ssr.js";
 import { H as HttpError, j as json, t as text, R as Redirect, e as error, A as ActionFailure } from "./chunks/index.js";
-import { i as is_primitive, g as get_type, s as stringify_string, D as DevalueError, a as is_plain_object, e as escaped } from "./chunks/utils.js";
-import { w as writable, r as readable } from "./chunks/index2.js";
+import { n as noop, s as safe_not_equal } from "./chunks/index2.js";
 import { a as assets, b as base, p as public_env, v as version, o as options, g as get_hooks, s as set_public_env } from "./chunks/server-internal.js";
+const DEV = false;
 function negotiate(accept, types) {
   const parts = [];
   accept.split(",").forEach((str, i) => {
@@ -44,6 +43,65 @@ function is_content_type(request, ...types) {
 }
 function is_form_content_type(request) {
   return is_content_type(request, "application/x-www-form-urlencoded", "multipart/form-data");
+}
+const escaped = {
+  "<": "\\u003C",
+  ">": "\\u003E",
+  "/": "\\u002F",
+  "\\": "\\\\",
+  "\b": "\\b",
+  "\f": "\\f",
+  "\n": "\\n",
+  "\r": "\\r",
+  "	": "\\t",
+  "\0": "\\u0000",
+  "\u2028": "\\u2028",
+  "\u2029": "\\u2029"
+};
+class DevalueError extends Error {
+  /**
+   * @param {string} message
+   * @param {string[]} keys
+   */
+  constructor(message, keys) {
+    super(message);
+    this.name = "DevalueError";
+    this.path = keys.join("");
+  }
+}
+function is_primitive(thing) {
+  return Object(thing) !== thing;
+}
+const object_proto_names = Object.getOwnPropertyNames(Object.prototype).sort().join("\0");
+function is_plain_object(thing) {
+  const proto = Object.getPrototypeOf(thing);
+  return proto === Object.prototype || proto === null || Object.getOwnPropertyNames(proto).sort().join("\0") === object_proto_names;
+}
+function get_type(thing) {
+  return Object.prototype.toString.call(thing).slice(8, -1);
+}
+function stringify_string(str) {
+  let result = '"';
+  for (let i = 0; i < str.length; i += 1) {
+    const char = str.charAt(i);
+    const code = char.charCodeAt(0);
+    if (char === '"') {
+      result += '\\"';
+    } else if (char in escaped) {
+      result += escaped[char];
+    } else if (code >= 55296 && code <= 57343) {
+      const next = str.charCodeAt(i + 1);
+      if (code <= 56319 && next >= 56320 && next <= 57343) {
+        result += char + str[++i];
+      } else {
+        result += `\\u${code.toString(16).toUpperCase()}`;
+      }
+    } else {
+      result += char;
+    }
+  }
+  result += '"';
+  return result;
 }
 const chars$1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 const unsafe_chars = /[<>\b\f\n\r\t\0\u2028\u2029]/g;
@@ -1048,6 +1106,53 @@ function validate_load_response(data, routeId) {
       `a load function related to route '${routeId}' returned ${typeof data !== "object" ? `a ${typeof data}` : data instanceof Response ? "a Response object" : Array.isArray(data) ? "an array" : "a non-plain object"}, but must return a plain object at the top level (i.e. \`return {...}\`)`
     );
   }
+}
+const subscriber_queue = [];
+function readable(value, start) {
+  return {
+    subscribe: writable(value, start).subscribe
+  };
+}
+function writable(value, start = noop) {
+  let stop;
+  const subscribers = /* @__PURE__ */ new Set();
+  function set(new_value) {
+    if (safe_not_equal(value, new_value)) {
+      value = new_value;
+      if (stop) {
+        const run_queue = !subscriber_queue.length;
+        for (const subscriber of subscribers) {
+          subscriber[1]();
+          subscriber_queue.push(subscriber, value);
+        }
+        if (run_queue) {
+          for (let i = 0; i < subscriber_queue.length; i += 2) {
+            subscriber_queue[i][0](subscriber_queue[i + 1]);
+          }
+          subscriber_queue.length = 0;
+        }
+      }
+    }
+  }
+  function update(fn) {
+    set(fn(value));
+  }
+  function subscribe(run, invalidate = noop) {
+    const subscriber = [run, invalidate];
+    subscribers.add(subscriber);
+    if (subscribers.size === 1) {
+      stop = start(set) || noop;
+    }
+    run(value);
+    return () => {
+      subscribers.delete(subscriber);
+      if (subscribers.size === 0) {
+        stop();
+        stop = null;
+      }
+    };
+  }
+  return { set, update, subscribe };
 }
 function hash(value) {
   let hash2 = 5381;

@@ -4,14 +4,11 @@ export const manifest = {
 	assets: new Set(["favicon.png","robots.txt"]),
 	mimeTypes: {".png":"image/png",".txt":"text/plain"},
 	_: {
-		entry: {"file":"_app/immutable/start-6bd9c222.js","imports":["_app/immutable/start-6bd9c222.js","_app/immutable/chunks/index-20c84258.js","_app/immutable/chunks/singletons-317f8e08.js","_app/immutable/chunks/index-295d139c.js","_app/immutable/chunks/parse-b67c4dc9.js"],"stylesheets":[],"fonts":[]},
+		entry: {"file":"_app/immutable/start-c564a1c0.js","imports":["_app/immutable/start-c564a1c0.js","_app/immutable/chunks/index-cdb4327e.js","_app/immutable/chunks/singletons-02237129.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			() => import('./nodes/0.js'),
 			() => import('./nodes/1.js'),
-			() => import('./nodes/2.js'),
-			() => import('./nodes/3.js'),
-			() => import('./nodes/4.js'),
-			() => import('./nodes/5.js')
+			() => import('./nodes/2.js')
 		],
 		routes: [
 			{
@@ -22,25 +19,11 @@ export const manifest = {
 				endpoint: null
 			},
 			{
-				id: "/about",
-				pattern: /^\/about\/?$/,
+				id: "/ytdl/info",
+				pattern: /^\/ytdl\/info\/?$/,
 				params: [],
-				page: { layouts: [0], errors: [1], leaf: 3 },
-				endpoint: null
-			},
-			{
-				id: "/sverdle",
-				pattern: /^\/sverdle\/?$/,
-				params: [],
-				page: { layouts: [0], errors: [1], leaf: 4 },
-				endpoint: null
-			},
-			{
-				id: "/sverdle/how-to-play",
-				pattern: /^\/sverdle\/how-to-play\/?$/,
-				params: [],
-				page: { layouts: [0], errors: [1], leaf: 5 },
-				endpoint: null
+				page: null,
+				endpoint: () => import('./entries/endpoints/ytdl/info/_server.ts.js')
 			}
 		],
 		matchers: async () => {

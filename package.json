@@ -18,6 +18,7 @@
 		"@playwright/test": "^1.28.1",
 		"@sveltejs/adapter-auto": "^1.0.0",
 		"@sveltejs/adapter-netlify": "^1.0.5",
+		"@sveltejs/adapter-static": "^1.0.5",
 		"@sveltejs/adapter-vercel": "^1.0.5",
 		"@sveltejs/kit": "^1.0.0",
 		"@types/cookie": "^0.5.1",
@@ -35,5 +36,8 @@
 		"vite": "^4.0.0",
 		"vitest": "^0.25.3"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"ytdl-core": "^4.11.2"
+	}
 }
