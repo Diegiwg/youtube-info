@@ -1,8 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	let info: object;
-	let url: string;
+	let url: string = 'https://www.youtube.com/watch?v=azAEHCQgcUI';
 
 	async function new_video() {
 		const reponse = await fetch('/ytdl/info', {
