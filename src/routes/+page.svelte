@@ -1,6 +1,37 @@
 <script lang="ts">
-	let info: object;
+	let info: {
+		formats: [
+			{
+				hasAudio: boolean;
+				hasVideo: boolean;
+				url: string;
+				qualityLabel: string;
+				mimeType: string;
+			}
+		];
+		videoDetails: {
+			title: string;
+		};
+	};
 	let url: string = 'https://www.youtube.com/watch?v=azAEHCQgcUI';
+
+	function formatName(format: (typeof info.formats)[0]) {
+		const has =
+			format.hasAudio && format.hasVideo
+				? 'Audio and Video'
+				: format.hasAudio
+				? 'Audio only'
+				: format.hasVideo
+				? 'Video only'
+				: 'No Audio or Video';
+		const mimeType = format.mimeType ? format.mimeType.split(';')[0] : '';
+
+		return `${has} (${mimeType})`;
+	}
+
+	function formatWithAudioVideo(data: typeof info) {
+		return data.formats.filter((f) => f.hasAudio && f.hasVideo)[0].url;
+	}
 
 	async function new_video() {
 		const reponse = await fetch('/ytdl/info', {
@@ -25,5 +56,17 @@
 </div>
 
 {#if info}
-	<p>{JSON.stringify(info)}</p>
+	<div id="info">
+		<h1 class="title">{info.videoDetails.title}</h1>
+		<!-- svelte-ignore a11y-media-has-caption -->
+		<video src={formatWithAudioVideo(info)} autoplay controls />
+		<ul class="formats">
+			{#each info.formats as format}
+				<li class="format-item">
+					<span class="format-item-name">{formatName(format)}</span>
+					<a class="format-item-url" href={format.url} rel="noreferer">DOWNLOAD</a>
+				</li>
+			{/each}
+		</ul>
+	</div>
 {/if}
