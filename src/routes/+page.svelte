@@ -16,6 +16,8 @@
 		});
 
 		info = await reponse.json();
+
+		console.log(info);
 	}
 </script>
 
