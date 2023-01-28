@@ -1,4 +1,7 @@
 <script lang="ts">
+	const youtube_link_regex =
+		/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w-]+\?v=|embed\/|v\/)?)([\w-]+)(\S+)?$/gim;
+
 	let info: {
 		formats: [
 			{
@@ -13,7 +16,7 @@
 			title: string;
 		};
 	};
-	let url: string = 'https://www.youtube.com/watch?v=azAEHCQgcUI';
+	let url: string;
 
 	function formatName(format: (typeof info.formats)[0]) {
 		const has =
@@ -33,26 +36,31 @@
 		return data.formats.filter((f) => f.hasAudio && f.hasVideo)[0].url;
 	}
 
-	async function new_video() {
-		const reponse = await fetch('/ytdl/info', {
-			method: 'POST',
-			body: JSON.stringify({
-				video_url: url
-			}),
+	async function searchVideoInfo() {
+		const video_url = youtube_link_regex.test(url) ? url : null;
+		if (!video_url) return;
+
+		const reponse = await fetch(`/ytdl/info?video_url=${video_url}`, {
+			method: 'GET',
 			headers: {
 				'content-type': 'application/json'
 			}
 		});
 
+		if (reponse.status !== 200) return alert('Error: ' + reponse.status);
 		info = await reponse.json();
-
-		console.log(info);
 	}
 </script>
 
-<div>
-	<input type="text" bind:value={url} />
-	<button on:click={new_video}>Play</button>
+<div id="video-input">
+	<input
+		type="text"
+		bind:value={url}
+		placeholder="Youtube Video URL (e.g. https://www.youtube.com/watch?v=oHg5SJYRHA0)"
+		pattern="^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"
+		required
+	/>
+	<button on:click={searchVideoInfo}>Search</button>
 </div>
 
 {#if info}
@@ -70,3 +78,26 @@
 		</ul>
 	</div>
 {/if}
+
+<style>
+	#video-input {
+		display: flex;
+		flex-direction: column;
+		width: 80%;
+	}
+
+	input:valid {
+		background-color: palegreen;
+	}
+
+	input:invalid {
+		background-color: lightpink;
+	}
+
+	.format-item {
+		list-style: none;
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+</style>
