@@ -1,6 +1,15 @@
 # Youtube Info
 
-> An API for the ytdl-core NPM package, with a simple web client
+## Demonstration
+
+
+https://user-images.githubusercontent.com/15692310/236733228-3f10bcb4-c096-471c-a19b-a0136073f333.mp4
+
+
+
+## Description
+
+An API for the ytdl-core NPM package, with a simple web client
 
 ## Mode of Use
 
